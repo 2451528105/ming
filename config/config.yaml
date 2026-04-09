@@ -1,0 +1,27 @@
+Application:
+  Name: MING
+  GameCode: 276
+  Env: dev
+  WebsocketPath: /game/ming
+  Port: 8080
+Log:
+  MinLevel: debug
+  Pathname: ./logs
+  Interval: 240h
+  TimeFormat: "2006-01-02 15:04:05"
+Redis:
+  Addr: 127.0.0.1:6379
+  ClientName: 
+  Username:
+  Password:
+  DB: 0
+PostgresSql:
+  Host: 127.0.0.1
+  Port: 5432
+  User: postgres
+  Password: postgres
+  DB: postgres
+RocketMQ:
+  Endpoint: 127.0.0.1:9876
+  Namespace: develop
+  ConsumerGroup: ming-consumer-group

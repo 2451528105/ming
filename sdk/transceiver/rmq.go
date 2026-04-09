@@ -1,0 +1,124 @@
+package transceiver
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"sync"
+	"time"
+
+	rmq "github.com/apache/rocketmq-clients/golang"
+	"github.com/google/uuid"
+)
+
+type XRMQTransceiver struct {
+	topic    string
+	producer rmq.Producer
+	consumer rmq.SimpleConsumer
+	ctx      context.Context
+	cancel   context.CancelFunc
+	once     sync.Once
+	wg       sync.WaitGroup
+	subs     sync.Map // key: topic, value: func(msg *rmq.MessageView) error
+}
+
+// 新建XRMQTransceiver
+func NewXRMQTransceiver(topic string, producer rmq.Producer, consumer rmq.SimpleConsumer) *XRMQTransceiver {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &XRMQTransceiver{
+		topic:    topic,
+		producer: producer,
+		consumer: consumer,
+		ctx:      ctx,
+		cancel:   cancel,
+	}
+}
+
+// 获取消息标签
+func getTag(gameName, node string) string {
+	return fmt.Sprintf("%s-%s", gameName, node)
+}
+
+// 发送消息
+func (t *XRMQTransceiver) SendMessage(uid int64, payload []byte, gameName, node string) (string, error) {
+	tag := getTag(gameName, node)
+	m := &message{
+		UUID:      uuid.New().String(),
+		Uid:       uid,
+		Timestamp: time.Now().UnixMilli(),
+		Payload:   payload,
+	}
+	body, err := json.Marshal(m)
+	if err != nil {
+		return "", fmt.Errorf("json marshal message: %w", err)
+	}
+	msg := &rmq.Message{
+		Topic: t.topic,
+		Tag:   &tag,
+		Body:  body,
+	}
+	receipt, err := t.producer.Send(context.Background(), msg)
+	if err != nil {
+		return "", fmt.Errorf("send message: %w", err)
+	}
+	return receipt[0].MessageID, nil
+}
+
+// 接收消息
+func (t *XRMQTransceiver) ReceiveMessage(gameName, node string, handler func(uid int64, payload []byte, gameName, node string) error) error {
+	tag := getTag(gameName, node)
+	cb := func(msg *rmq.MessageView) error {
+		var body message
+		if err := json.Unmarshal(msg.GetBody(), &body); err != nil {
+			return fmt.Errorf("json unmarshal message: %w", err)
+		}
+		return handler(body.Uid, body.Payload, gameName, node)
+	}
+	if _, ok := t.subs.LoadOrStore(t.topic, cb); ok {
+		return fmt.Errorf("topic %s has been subscribed", t.topic)
+	}
+
+	if err := t.consumer.Subscribe(t.topic, rmq.NewFilterExpression(tag)); err != nil {
+		t.subs.Delete(t.topic)
+		return fmt.Errorf("subscribe topic %s failed: %w", t.topic, err)
+	}
+	t.once.Do(t.watch)
+
+	return nil
+}
+
+func (t *XRMQTransceiver) watch() {
+	t.wg.Add(1)
+	go func() {
+		defer t.wg.Done()
+		if err := t.consumer.Start(); err != nil {
+			return
+		}
+		for {
+			select {
+			case <-t.ctx.Done():
+				return
+			default:
+			}
+			msgs, err := t.consumer.Receive(t.ctx, 16, 30*time.Second)
+			if err != nil {
+				time.Sleep(200 * time.Millisecond)
+				continue
+			}
+			for _, msg := range msgs {
+				cbRaw, ok := t.subs.Load(msg.GetTopic())
+				if !ok || cbRaw == nil {
+					continue
+				}
+				cb, ok := cbRaw.(func(msg *rmq.MessageView) error)
+				if !ok {
+					continue
+				}
+				if err = cb(msg); err != nil {
+					continue
+				}
+				_ = t.consumer.Ack(t.ctx, msg)
+			}
+		}
+	}()
+}
