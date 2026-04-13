@@ -8,6 +8,25 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var unbindGateLua = redis.NewScript(`
+local key = KEYS[1]
+local nodeField = ARGV[1]
+local connField = ARGV[2]
+local expectNode = ARGV[3]
+local expectConn = ARGV[4]
+
+local vals = redis.call('HMGET', key, nodeField, connField)
+local curNode = vals[1]
+local curConn = vals[2]
+
+if curNode == expectNode and curConn == expectConn then
+	redis.call('HMSET', key, nodeField, '', connField, '')
+	return 1
+end
+
+return 0
+`)
+
 type RedisLocator struct {
 	gameRedis       redis.UniversalClient // 游戏redis
 	playerKeyFormat string                // 玩家key format
@@ -32,18 +51,19 @@ func (r *RedisLocator) BindGateNode(uid int64, node string, connId int64) error 
 	return r.gameRedis.HMSet(context.Background(), key, r.gateNodeField, node, r.gateConnIdField, connId).Err()
 }
 
-func (r *RedisLocator) UnBindGateNode(uid int64, node string) error {
-	current, err := r.GetGateNode(uid)
-	if err != nil {
-		return err
-	}
-	if current == node {
-		key := fmt.Sprintf(r.playerKeyFormat, uid)
-		if err = r.gameRedis.HMSet(context.Background(), key, r.gateNodeField, "").Err(); err != nil {
-			return err
-		}
-	}
-	return nil
+func (r *RedisLocator) UnbindGateNode(uid int64, node string, connId int64) error {
+	key := fmt.Sprintf(r.playerKeyFormat, uid)
+	expectConnId := strconv.FormatInt(connId, 10)
+	_, err := unbindGateLua.Run(
+		context.Background(),
+		r.gameRedis,
+		[]string{key},
+		r.gateNodeField,
+		r.gateConnIdField,
+		node,
+		expectConnId,
+	).Int()
+	return err
 }
 
 func (r *RedisLocator) GetGateNode(uid int64) (string, error) {

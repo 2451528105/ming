@@ -2,11 +2,15 @@ package game
 
 import (
 	"database/sql"
+	"fmt"
 	"ming/internal/config"
+	"ming/sdk/consts"
 	"ming/sdk/engine"
+	"ming/sdk/locate"
 	"ming/sdk/netutil"
 	"ming/sdk/rand"
 	"ming/sdk/snowflake"
+	"ming/sdk/transceiver"
 	"ming/sdk/xlog"
 	"sync"
 
@@ -21,16 +25,19 @@ const (
 )
 
 type Game struct {
-	nodeId   string
-	ip       string
-	redis    redis.UniversalClient
-	postgres *sql.DB
-	producer rmq.Producer
-	consumer rmq.SimpleConsumer
-	wsServer *melody.Melody
-	idGen    *snowflake.Generator
+	nodeId      string                  // 节点id
+	ip          string                  // ip地址
+	redis       redis.UniversalClient   // redis客户端
+	postgres    *sql.DB                 // postgres数据库客户端
+	producer    rmq.Producer            // rmq生产者
+	consumer    rmq.SimpleConsumer      // rmq消费者
+	wsServer    *melody.Melody          // websocket服务器
+	idGen       *snowflake.Generator    // 雪花算法生成器
+	transceiver transceiver.Transceiver // rmq消息接收器
+	locator     locate.Locator          // 节点定位器
+	sessions    sync.Map                // 用户会话存储器：key: userId(int64), value: *melody.Session
 
-	sessions sync.Map // key: userId(int64), value: *melody.Session
+	urm *UserRequestManager // 用户请求管理器
 }
 
 func (g *Game) Init() {
@@ -88,7 +95,8 @@ func (g *Game) Init() {
 	}
 	g.producer = producer
 	g.consumer = consumer
-
+	g.transceiver = transceiver.NewXRMQTransceiver(consts.TopicGameMessage, g.producer, g.consumer)
+	g.locator = locate.NewLocator(g.redis, consts.KeyFormat_Player, consts.Field_GateNode, consts.Field_GateConnId)
 	//启动各个组件
 	g.startConnectionServices()
 }
@@ -97,9 +105,25 @@ func (g *Game) Init() {
 func (g *Game) startConnectionServices() error {
 	g.wsServer = melody.New()
 	//1.监听游戏消息
+	g.listenGameMessage()
 	//2.配置webSocket服务
 	g.configureWebSocket()
 	//3.配置http服务
 	//4.启动http服务器
 	return nil
+}
+
+// 监听游戏消息 (其它节点发送给本节点玩家的消息)
+func (g *Game) listenGameMessage() {
+	err := g.transceiver.ReceiveMessage(config.Cfg.Application.Name, g.nodeId, func(uid int64, payload []byte, msgId string) error {
+		xlog.Info().Msgf("[listenGameMessage] ReceiveMessage, uid: %d; msgId: %s", uid, msgId)
+		s, ok := g.sessions.Load(uid)
+		if !ok {
+			return fmt.Errorf("session not found, uid: %d", uid)
+		}
+		return s.(*melody.Session).WriteBinary(payload)
+	})
+	if err != nil {
+		xlog.Error().Msgf("[listenGameMessage] ReceiveMessage error: %v", err)
+	}
 }

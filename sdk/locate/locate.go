@@ -1,6 +1,6 @@
 package locate
 
-type Locate interface {
+type Locator interface {
 	Name() string
 	// 绑定用户到网关节点
 	BindGateNode(uid int64, nodeId string, connId int64) error

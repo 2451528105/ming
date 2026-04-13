@@ -65,14 +65,14 @@ func (t *XRMQTransceiver) SendMessage(uid int64, payload []byte, gameName, node 
 }
 
 // 接收消息
-func (t *XRMQTransceiver) ReceiveMessage(gameName, node string, handler func(uid int64, payload []byte, gameName, node string) error) error {
+func (t *XRMQTransceiver) ReceiveMessage(gameName, node string, handler func(uid int64, payload []byte, msgId string) error) error {
 	tag := getTag(gameName, node)
 	cb := func(msg *rmq.MessageView) error {
 		var body message
 		if err := json.Unmarshal(msg.GetBody(), &body); err != nil {
 			return fmt.Errorf("json unmarshal message: %w", err)
 		}
-		return handler(body.Uid, body.Payload, gameName, node)
+		return handler(body.Uid, body.Payload, body.UUID)
 	}
 	if _, ok := t.subs.LoadOrStore(t.topic, cb); ok {
 		return fmt.Errorf("topic %s has been subscribed", t.topic)
@@ -121,4 +121,18 @@ func (t *XRMQTransceiver) watch() {
 			}
 		}
 	}()
+}
+
+func (t *XRMQTransceiver) Close() error {
+	if t.producer != nil {
+		if err := t.producer.GracefulStop(); err != nil {
+			return err
+		}
+	}
+	if t.consumer != nil {
+		if err := t.consumer.GracefulStop(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
