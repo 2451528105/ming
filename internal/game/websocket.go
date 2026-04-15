@@ -38,6 +38,14 @@ func (g *Game) handleConnect() {
 		s.Set(UserKey, userId)
 		s.Set(ConnIDKey, connID)
 		g.sessions.Store(userId, s)
+		// 绑定玩家所在网关节点和连接ID，供跨节点路由查询
+		if err = g.locator.BindGateNode(userId, g.nodeId, connID); err != nil {
+			g.sessions.Delete(userId)
+			xlog.Error().Err(err).Msgf("[Connect]bind gate node failed, uid: %d, connId: %d", userId, connID)
+			_ = s.Write([]byte("bind gate node failed"))
+			_ = s.Close()
+			return
+		}
 		xlog.Info().Msgf("[Connect]user %d connected, connId: %d, ip: %s", userId, connID, s.Request.RemoteAddr)
 
 	})
@@ -82,6 +90,9 @@ func (g *Game) handleDisconnect() {
 			return
 		}
 		g.sessions.Delete(userId)
+		if err := g.locator.UnbindGateNode(userId, g.nodeId, connID); err != nil {
+			xlog.Error().Err(err).Msgf("[Disconnect]unbind gate node failed, uid: %d, connId: %d", userId, connID)
+		}
 		xlog.Info().Msgf("[Disconnect]user %d disconnected, connId: %d", userId, connID)
 
 	})

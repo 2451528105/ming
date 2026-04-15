@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"ming/internal/config"
+	"ming/internal/room"
+	"ming/internal/service"
 	"ming/sdk/consts"
 	"ming/sdk/engine"
 	"ming/sdk/locate"
@@ -37,7 +39,8 @@ type Game struct {
 	locator     locate.Locator          // 节点定位器
 	sessions    sync.Map                // 用户会话存储器：key: userId(int64), value: *melody.Session
 
-	urm *UserRequestManager // 用户请求管理器
+	urm      *UserRequestManager // 用户请求管理器
+	roomPipe *room.Pipeline
 }
 
 func (g *Game) Init() {
@@ -97,6 +100,25 @@ func (g *Game) Init() {
 	g.consumer = consumer
 	g.transceiver = transceiver.NewXRMQTransceiver(consts.TopicGameMessage, g.producer, g.consumer)
 	g.locator = locate.NewLocator(g.redis, consts.KeyFormat_Player, consts.Field_GateNode, consts.Field_GateConnId)
+	g.roomPipe, err = room.Init(room.PipelineOptions{
+		MailboxSize: 256,
+		Resolver:    room.NewUIDResolver(),
+		Service:     service.NewDefaultRoomService(),
+	})
+	if err != nil {
+		xlog.Error().Err(err).Msg("[Init] init room pipeline failed")
+		return
+	}
+	g.urm = NewUserRequestManager(func(event *requestEvent) {
+		header := event.data.GetHeader()
+		if header == nil {
+			xlog.Error().Msg("[Init] room dispatch missing header")
+			return
+		}
+		if err := g.roomPipe.Dispatch(header.GetUid(), event.data.GetRoute(), event.data.GetPayload(), header.GetMsgId()); err != nil {
+			xlog.Error().Err(err).Msgf("[Init] room dispatch failed, uid: %d", header.GetUid())
+		}
+	})
 	//启动各个组件
 	g.startConnectionServices()
 }

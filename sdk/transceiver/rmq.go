@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -20,6 +21,16 @@ type XRMQTransceiver struct {
 	once     sync.Once
 	wg       sync.WaitGroup
 	subs     sync.Map // key: topic, value: func(msg *rmq.MessageView) error
+}
+
+// safeSubscribe wraps third-party SDK panic as error to avoid process crash.
+func safeSubscribe(consumer rmq.SimpleConsumer, topic, tag string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("rmq subscribe panic, topic=%s, tag=%s, panic=%v, stack=%s", topic, tag, r, string(debug.Stack()))
+		}
+	}()
+	return consumer.Subscribe(topic, rmq.NewFilterExpression(tag))
 }
 
 // 新建XRMQTransceiver
@@ -78,49 +89,46 @@ func (t *XRMQTransceiver) ReceiveMessage(gameName, node string, handler func(uid
 		return fmt.Errorf("topic %s has been subscribed", t.topic)
 	}
 
-	if err := t.consumer.Subscribe(t.topic, rmq.NewFilterExpression(tag)); err != nil {
+	if err := safeSubscribe(t.consumer, t.topic, tag); err != nil {
 		t.subs.Delete(t.topic)
 		return fmt.Errorf("subscribe topic %s failed: %w", t.topic, err)
 	}
-	t.once.Do(t.watch)
+	t.once.Do(func() {
+		t.wg.Add(1)
+		go t.watch()
+	})
 
 	return nil
 }
 
 func (t *XRMQTransceiver) watch() {
-	t.wg.Add(1)
-	go func() {
-		defer t.wg.Done()
-		if err := t.consumer.Start(); err != nil {
+	defer t.wg.Done()
+	for {
+		select {
+		case <-t.ctx.Done():
 			return
+		default:
 		}
-		for {
-			select {
-			case <-t.ctx.Done():
-				return
-			default:
-			}
-			msgs, err := t.consumer.Receive(t.ctx, 16, 30*time.Second)
-			if err != nil {
-				time.Sleep(200 * time.Millisecond)
+		msgs, err := t.consumer.Receive(t.ctx, 16, 30*time.Second)
+		if err != nil {
+			time.Sleep(200 * time.Millisecond)
+			continue
+		}
+		for _, msg := range msgs {
+			cbRaw, ok := t.subs.Load(msg.GetTopic())
+			if !ok || cbRaw == nil {
 				continue
 			}
-			for _, msg := range msgs {
-				cbRaw, ok := t.subs.Load(msg.GetTopic())
-				if !ok || cbRaw == nil {
-					continue
-				}
-				cb, ok := cbRaw.(func(msg *rmq.MessageView) error)
-				if !ok {
-					continue
-				}
-				if err = cb(msg); err != nil {
-					continue
-				}
-				_ = t.consumer.Ack(t.ctx, msg)
+			cb, ok := cbRaw.(func(msg *rmq.MessageView) error)
+			if !ok {
+				continue
 			}
+			if err = cb(msg); err != nil {
+				continue
+			}
+			_ = t.consumer.Ack(t.ctx, msg)
 		}
-	}()
+	}
 }
 
 func (t *XRMQTransceiver) Close() error {
