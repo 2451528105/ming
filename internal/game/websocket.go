@@ -1,12 +1,13 @@
 package game
 
 import (
+	"ming/internal/config"
 	"ming/sdk/xlog"
 	"strconv"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/ivy-mobile/odin/envelope"
 	"github.com/olahol/melody"
+	"google.golang.org/protobuf/proto"
 )
 
 // 配置webSocket服务
@@ -120,4 +121,23 @@ func (g *Game) handleMessage() {
 			data: &data,
 		})
 	})
+}
+
+// SendMessageByRMQ 发送消息 - 通过消息队列
+func (g *Game) SendMessageByRMQ(uid int64, data []byte) {
+
+	node, err := g.locator.GetGateNode(uid)
+	if err != nil {
+		xlog.Error().Msgf("[SendMessageByRMQ] GetGateNode error: %v, uid: %v", err, uid)
+		return
+	}
+	if node == "" {
+		xlog.Error().Msgf("[SendMessageByRMQ] GetGateNode node is empty, uid: %v", uid)
+		return
+	}
+	msgId, err := g.transceiver.SendMessage(uid, data, config.Cfg.Application.Name, node)
+	if err != nil {
+		xlog.Error().Msgf("[Transceiver] SendMessage error: %v, uid: %v, node: %v, msgId: %v", err, uid, node, msgId)
+		return
+	}
 }

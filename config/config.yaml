@@ -3,7 +3,7 @@ Application:
   GameCode: 276
   Env: dev
   WebsocketPath: /game/ming
-  Port: 8080
+  Port: 8088
 Log:
   MinLevel: debug
   Pathname: ./logs

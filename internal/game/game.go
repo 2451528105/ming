@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"ming/internal/config"
@@ -14,9 +15,13 @@ import (
 	"ming/sdk/snowflake"
 	"ming/sdk/transceiver"
 	"ming/sdk/xlog"
+	"net/http"
+	"os"
 	"sync"
+	"time"
 
 	rmq "github.com/apache/rocketmq-clients/golang"
+	"github.com/ivy-mobile/odin/xutil/xos"
 	"github.com/olahol/melody"
 	"github.com/redis/go-redis/v9"
 )
@@ -34,12 +39,14 @@ type Game struct {
 	producer    rmq.Producer            // rmq生产者
 	consumer    rmq.SimpleConsumer      // rmq消费者
 	wsServer    *melody.Melody          // websocket服务器
+	httpServer  *http.Server            // http服务器
 	idGen       *snowflake.Generator    // 雪花算法生成器
 	transceiver transceiver.Transceiver // rmq消息接收器
 	locator     locate.Locator          // 节点定位器
 	sessions    sync.Map                // 用户会话存储器：key: userId(int64), value: *melody.Session
 
 	urm      *UserRequestManager // 用户请求管理器
+	routes   sync.Map            // 路由存储器：key: 版本_tag, value: 处理逻辑
 	roomPipe *room.Pipeline
 }
 
@@ -63,6 +70,8 @@ func (g *Game) Init() {
 		g.nodeId,
 		g.ip,
 		config.Cfg.Log.TimeFormat)
+	
+	//2.5 初始化路由
 
 	//3.初始化redis
 	redis, err := engine.NewRedisClent(config.Cfg.Redis.Addr,
@@ -121,6 +130,13 @@ func (g *Game) Init() {
 	})
 	//启动各个组件
 	g.startConnectionServices()
+	// 4.等待系统信号
+	xos.WaitSysSignal(func(s os.Signal) {
+		xlog.Info().Msgf("Received signal: %s, shutting down server...", s.String())
+	})
+
+	// 5. 释放资源
+	g.shutdown()
 }
 
 // 启动各个组件
@@ -131,7 +147,13 @@ func (g *Game) startConnectionServices() error {
 	//2.配置webSocket服务
 	g.configureWebSocket()
 	//3.配置http服务
+	g.configureHttpServer()
 	//4.启动http服务器
+	if err := <-g.startHttpServer(); err != nil {
+		xlog.Error().Err(err).Msg("http server start failed")
+		return err
+	}
+	xlog.Info().Msgf("http server started on %s successfully", config.ApiPort())
 	return nil
 }
 
@@ -148,4 +170,32 @@ func (g *Game) listenGameMessage() {
 	if err != nil {
 		xlog.Error().Msgf("[listenGameMessage] ReceiveMessage error: %v", err)
 	}
+}
+
+// 关闭服务
+func (g *Game) shutdown() {
+
+	// 1. 创建一个带超时的上下文用于关闭
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// 2. 关闭HTTP服务器
+	if err := g.httpServer.Shutdown(shutdownCtx); err != nil {
+		xlog.Error().Err(err).Msg("Failed to shutdown HTTP server")
+	}
+
+	// 3. 关闭WebSocket连接
+	if err := g.wsServer.Close(); err != nil {
+		xlog.Error().Err(err).Msg("Failed to close WebSocket server")
+	}
+
+	// 6. 关闭用户请求管理器
+	g.urm.Close()
+
+	// 7. 收发器关闭
+	if err := g.transceiver.Close(); err != nil {
+		xlog.Error().Err(err).Msg("Failed to close transceiver")
+	}
+
+	xlog.Info().Msg("Server shutdown completed")
 }

@@ -1,6 +1,9 @@
 package config
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Config struct {
 	Application ApplicationConfig `yaml:"Application"` // 应用配置
@@ -47,4 +50,14 @@ type RocketMQConfig struct {
 	Endpoint      string `yaml:"Endpoint"`      // rocketmq地址
 	Namespace     string `yaml:"Namespace"`     // rocketmq命名空间
 	ConsumerGroup string `yaml:"ConsumerGroup"` // rocketmq消费者组
+}
+
+// 获取api端口
+func ApiPort() string {
+	return fmt.Sprintf(":%d", Cfg.Application.Port)
+}
+
+// 获取websocket路径
+func WebsocketPath() string {
+	return Cfg.Application.WebsocketPath
 }

@@ -1,0 +1,17 @@
+syntax = "proto3";
+package pb;
+option go_package = "./pb";
+
+// 登录响应数据
+message LoginGameResponse {
+    PlayerInfo player_info = 1; // 玩家信息
+}
+
+// 玩家信息
+message PlayerInfo {
+    int64 uid = 1; // 用户ID
+    string nickname = 2; // 昵称
+    string avatar = 3; // 头像
+    int32 sex = 4; // 性别
+    string register_time = 5; // 注册时间
+}
