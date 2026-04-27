@@ -15,3 +15,43 @@ message PlayerInfo {
     int32 sex = 4; // 性别
     string register_time = 5; // 注册时间
 }
+
+// ---------- 房间响应（请求定义见 request.proto）----------
+
+// 房间简要信息
+message RoomInfo {
+    string room_id = 1; // 房间ID
+    string name = 2; // 展示名称
+    int32 max_players = 3; // 人数上限
+    int32 cur_players = 4; // 当前人数
+    int64 owner_uid = 5; // 房主用户ID
+    int32 status = 6; // 房间状态（如等待、游戏中，具体取值由业务约定）
+}
+
+// 房间内成员与座位
+message RoomMember {
+    int64 uid = 1;
+    string nickname = 2;
+    int32 seat = 3; // 座位号
+    bool is_ready = 4; // 是否已准备
+}
+
+message CreateRoomResponse {
+    RoomInfo room_info = 1;
+}
+
+message JoinRoomResponse {
+    RoomInfo room_info = 1;
+    repeated RoomMember members = 2;
+    int32 self_seat = 3; // 当前用户座位号
+}
+
+message ExitRoomResponse {
+    string room_id = 1;
+}
+
+message RoomReadyResponse {
+    RoomInfo room_info = 1;
+    repeated RoomMember members = 2;
+    bool all_ready = 3; // 是否全员已准备（业务可按需使用）
+}

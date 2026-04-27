@@ -9,8 +9,8 @@ import (
 )
 
 type (
-	GameMessageHandler func(g *Game, s *melody.Session, msg *envelope.InputMessage) error // 游戏消息处理器
-	//CmdMessageHandler  func(g *Game, msg []byte)                // 指令消息处理器
+	// GameMessageHandler 由上层注册；具体业务在 handler 包实现，此处仅为分发回调类型。
+	GameMessageHandler func(g *Game, s *melody.Session, msg *envelope.InputMessage) error
 )
 
 func Handler[I any](fn func(Context, *I)) GameMessageHandler {
@@ -22,7 +22,7 @@ func Handler[I any](fn func(Context, *I)) GameMessageHandler {
 				return fmt.Errorf("[Handler] unmarshal payload faild: %w", err)
 			}
 		}
-		if ctx := newDefaultContext(g, s, msg); ctx.validate() {
+		if ctx := newDefaultContext(g, s, msg); ctx.validateEnvelope() {
 			//xlog.Info().Int64("Player", ctx.Uid()).Str("Route", msg.GetRoute()).Str("MsgId", msg.GetMsgId()).Msgf("[Request] ... req: %s", in)
 			fn(ctx, &in)
 		}

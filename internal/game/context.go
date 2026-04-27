@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"ming/internal/config"
 	"ming/sdk/consts"
 	"ming/sdk/xlog"
 	"time"
@@ -24,7 +23,7 @@ type Context interface {
 	Cost() time.Duration // 耗时 = 当前时间与创建时间之间的时间差
 	OkResp(...proto.Message)
 	ErrResp(consts.ErrorCode, ...string)
-	Push(msgTag consts.WsTag, data proto.Message, uids ...int64)
+	Push(msgTag string, data proto.Message, uids ...int64)
 }
 type defaultContext struct {
 	g          *Game
@@ -42,8 +41,8 @@ func newDefaultContext(g *Game, s *melody.Session, req *envelope.InputMessage) *
 	}
 }
 
-// 验证公共必选参数
-func (d *defaultContext) validate() bool {
+// validateEnvelope 校验信封/路由等传输层必填字段，不包含业务规则（如 gameId 是否为本产品由 handler 决定）。
+func (d *defaultContext) validateEnvelope() bool {
 	req := d.req
 	if req == nil {
 		d.ErrResp(consts.ErrorCode_RequestErr, "invalid request")
@@ -60,10 +59,6 @@ func (d *defaultContext) validate() bool {
 	}
 	if header.GetGameId() == 0 {
 		d.ErrResp(consts.ErrorCode_RequestErr, "invalid gameId")
-		return false
-	}
-	if string(header.GetGameId()) != config.Cfg.Application.GameCode {
-		d.ErrResp(consts.ErrorCode_RequestErr, fmt.Sprintf("gameId not match: %d, must be %d", header.GetGameId(), config.Cfg.Application.GameCode))
 		return false
 	}
 	if header.GetTimestamp() == 0 {
@@ -118,7 +113,7 @@ func (d *defaultContext) ErrResp(code consts.ErrorCode, msg ...string) {
 }
 
 // Push 推送消息
-func (d *defaultContext) Push(msgTag consts.WsTag, msg proto.Message, uids ...int64) {
+func (d *defaultContext) Push(msgTag string, msg proto.Message, uids ...int64) {
 	if len(uids) <= 0 {
 		xlog.Info().Msgf("[Push] canceled ! msgTag: %v, uids: %v, cost: %v", msgTag, uids, d.Cost())
 		return
@@ -134,7 +129,7 @@ func (d *defaultContext) Push(msgTag consts.WsTag, msg proto.Message, uids ...in
 			},
 			MsgType:   consts.WsTag_Push,
 			ErrorCode: string(consts.ErrorCode_Success),
-			MsgTag:    string(msgTag),
+			MsgTag:    msgTag,
 			Data:      data,
 		}
 		bytes, _ := proto.Marshal(pm)

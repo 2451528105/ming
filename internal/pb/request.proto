@@ -6,3 +6,29 @@ option go_package = "./pb";
 message LoginGameRequest {
 
 }
+
+// ---------- 房间请求（响应见 push.proto）----------
+
+// 创建房间
+message CreateRoomRequest {
+    string name = 1; // 房间名
+    int32 max_players = 2; // 最大人数
+    string password = 3; // 进房密码，空表示无密码
+}
+
+// 进入房间
+message JoinRoomRequest {
+    string room_id = 1;
+    string password = 2; // 无密码房间可留空
+}
+
+// 退出房间
+message ExitRoomRequest {
+    string room_id = 1;
+}
+
+// 准备 / 取消准备
+message RoomReadyRequest {
+    string room_id = 1;
+    bool is_ready = 2; // true 准备，false 取消准备
+}

@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"ming/internal/config"
-	"ming/internal/room"
-	"ming/internal/service"
 	"ming/sdk/consts"
 	"ming/sdk/engine"
 	"ming/sdk/locate"
@@ -45,9 +43,17 @@ type Game struct {
 	locator     locate.Locator          // 节点定位器
 	sessions    sync.Map                // 用户会话存储器：key: userId(int64), value: *melody.Session
 
-	urm      *UserRequestManager // 用户请求管理器
-	routes   sync.Map            // 路由存储器：key: 版本_tag, value: 处理逻辑
-	roomPipe *room.Pipeline
+	urm           *UserRequestManager // 用户请求管理器
+	routes        sync.Map            // 路由存储器：key: 版本_tag, value: 处理逻辑
+	shutdownHooks []func()            // 进程退出时逆序调用，由组装层注册
+}
+
+// RegisterShutdownHook 注册进程关闭回调（逆序执行）；须在 Init 前调用。Game 不解析回调语义。
+func (g *Game) RegisterShutdownHook(fn func()) {
+	if fn == nil {
+		return
+	}
+	g.shutdownHooks = append(g.shutdownHooks, fn)
 }
 
 func (g *Game) Init() {
@@ -70,7 +76,7 @@ func (g *Game) Init() {
 		g.nodeId,
 		g.ip,
 		config.Cfg.Log.TimeFormat)
-	
+
 	//2.5 初始化路由
 
 	//3.初始化redis
@@ -109,25 +115,7 @@ func (g *Game) Init() {
 	g.consumer = consumer
 	g.transceiver = transceiver.NewXRMQTransceiver(consts.TopicGameMessage, g.producer, g.consumer)
 	g.locator = locate.NewLocator(g.redis, consts.KeyFormat_Player, consts.Field_GateNode, consts.Field_GateConnId)
-	g.roomPipe, err = room.Init(room.PipelineOptions{
-		MailboxSize: 256,
-		Resolver:    room.NewUIDResolver(),
-		Service:     service.NewDefaultRoomService(),
-	})
-	if err != nil {
-		xlog.Error().Err(err).Msg("[Init] init room pipeline failed")
-		return
-	}
-	g.urm = NewUserRequestManager(func(event *requestEvent) {
-		header := event.data.GetHeader()
-		if header == nil {
-			xlog.Error().Msg("[Init] room dispatch missing header")
-			return
-		}
-		if err := g.roomPipe.Dispatch(header.GetUid(), event.data.GetRoute(), event.data.GetPayload(), header.GetMsgId()); err != nil {
-			xlog.Error().Err(err).Msgf("[Init] room dispatch failed, uid: %d", header.GetUid())
-		}
-	})
+	g.urm = NewUserRequestManager(g.processUserRequest)
 	//启动各个组件
 	g.startConnectionServices()
 	// 4.等待系统信号
@@ -192,10 +180,33 @@ func (g *Game) shutdown() {
 	// 6. 关闭用户请求管理器
 	g.urm.Close()
 
+	for i := len(g.shutdownHooks) - 1; i >= 0; i-- {
+		g.shutdownHooks[i]()
+	}
+
 	// 7. 收发器关闭
 	if err := g.transceiver.Close(); err != nil {
 		xlog.Error().Err(err).Msg("Failed to close transceiver")
 	}
 
 	xlog.Info().Msg("Server shutdown completed")
+}
+
+// 从路由表分发到具体业务处理器。
+func (g *Game) processUserRequest(event *requestEvent) {
+	header := event.data.GetHeader()
+	if header == nil {
+		xlog.Error().Msg("[processUserRequest] missing header")
+		return
+	}
+	key := fmt.Sprintf("%s:%s", event.data.GetHeader().GetVersion(), event.data.GetRoute())
+	handler, ok := g.routes.Load(key)
+	if !ok {
+		xlog.Error().Msgf("[processUserRequest] route %s not found", key)
+		return
+	}
+	if err := handler.(GameMessageHandler)(g, event.s, event.data); err != nil {
+		xlog.Error().Msgf("[processUserRequest] handler error: %v", err)
+		return
+	}
 }
