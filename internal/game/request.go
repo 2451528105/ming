@@ -2,10 +2,10 @@ package game
 
 import (
 	"context"
+	"ming/internal/pb"
 	"ming/sdk/xlog"
 	"sync"
 
-	"github.com/ivy-mobile/odin/envelope"
 	"github.com/olahol/melody"
 	"golang.org/x/time/rate"
 )
@@ -13,7 +13,7 @@ import (
 // 请求事件
 type requestEvent struct {
 	s    *melody.Session
-	data *envelope.InputMessage
+	data *pb.InputMessage
 }
 
 // UserRequestManager 用户请求管理器

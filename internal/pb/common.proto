@@ -1,0 +1,27 @@
+syntax = "proto3";
+package pb;
+option go_package = "./pb";
+
+message Header {
+    uint64 seq = 1;
+    int64 uid = 2;
+    int32 game_id = 3;
+    string msg_id = 4;
+    int64 timestamp = 5;
+    string version = 6;
+}
+  
+message InputMessage {
+    Header header = 1;
+    string route = 2;
+    bytes payload = 3;   // 这里再塞 request.proto 里的业务请求体
+}
+  
+message OutputMessage {
+    Header header = 1;
+    uint32 msg_type = 2;   // 1=push, 2=reply
+    string error_code = 3;
+    string error_msg = 4;
+    string msg_tag = 5;
+    bytes data = 6;        // 这里再塞 push.proto 里的业务响应/推送体
+}

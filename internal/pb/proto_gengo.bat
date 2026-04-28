@@ -1,17 +1,31 @@
 @echo off
-REM 采用docker proto镜像生成go代码
-docker run --rm -v %~dp0:/defs rvolosatovs/protoc --proto_path=/defs --go_out=/defs /defs/*.proto
+setlocal
 
-REM 采用docker proto镜像生成cpp代码
-REM docker run --rm -v %~dp0:/defs rvolosatovs/protoc --proto_path=/defs --cpp_out=/defs  /defs/*.proto
+REM Generate Go protobuf files in-place for common/request/push.
+REM Requires Docker and image rvolosatovs/protoc.
 
-REM 采用docker proto镜像生成java代码
-REM docker run --rm -v %~dp0:/defs rvolosatovs/protoc --proto_path=/defs --java_out=/defs  /defs/*.proto
+where docker >nul 2>&1
+if errorlevel 1 (
+  echo [ERROR] docker not found. Please install Docker Desktop first.
+  exit /b 1
+)
 
-REM 采用docker proto镜像生成rust代码
-REM docker run --rm -v %~dp0:/defs rvolosatovs/protoc --proto_path=/defs --rust_out=/defs  /defs/*.proto
+set "PB_DIR=%~dp0"
 
-REM 移动代码到当前目录
-move /Y %~dp0\pb\*.go %~dp0\
-REM 删除临时目录
-rmdir /S /Q %~dp0\pb
+docker run --rm -v "%PB_DIR%:/defs" rvolosatovs/protoc ^
+  --proto_path=/defs ^
+  --go_out=/defs ^
+  --go_opt=paths=source_relative ^
+  /defs/common.proto /defs/request.proto /defs/push.proto
+
+if errorlevel 1 (
+  echo [ERROR] protoc generation failed.
+  exit /b 1
+)
+
+echo [OK] Generated:
+echo   common.pb.go
+echo   request.pb.go
+echo   push.pb.go
+endlocal
+exit /b 0

@@ -2,11 +2,11 @@ package game
 
 import (
 	"fmt"
+	"ming/internal/pb"
 	"ming/sdk/consts"
 	"ming/sdk/xlog"
 	"time"
 
-	"github.com/ivy-mobile/odin/envelope"
 	"github.com/olahol/melody"
 	"google.golang.org/protobuf/proto"
 )
@@ -28,11 +28,11 @@ type Context interface {
 type defaultContext struct {
 	g          *Game
 	session    *melody.Session        // 当前会话
-	req        *envelope.InputMessage // 本次请求数据
+	req        *pb.InputMessage       // 本次请求数据
 	createTime int64                  // 进入请求时间 ms
 }
 
-func newDefaultContext(g *Game, s *melody.Session, req *envelope.InputMessage) *defaultContext {
+func newDefaultContext(g *Game, s *melody.Session, req *pb.InputMessage) *defaultContext {
 	return &defaultContext{
 		g:          g,
 		session:    s,
@@ -84,8 +84,8 @@ func (d *defaultContext) ErrResp(code consts.ErrorCode, msg ...string) {
 		xlog.Error().Msg("session is nil")
 		return
 	}
-	pm := &envelope.OutputMessage{
-		Header: &envelope.Header{
+	pm := &pb.OutputMessage{
+		Header: &pb.Header{
 			Seq:       d.Seq(),
 			Uid:       d.Uid(),
 			MsgId:     d.MsgId(),
@@ -120,8 +120,8 @@ func (d *defaultContext) Push(msgTag string, msg proto.Message, uids ...int64) {
 	}
 	data, _ := proto.Marshal(msg)
 	for _, uid := range uids {
-		pm := &envelope.OutputMessage{
-			Header: &envelope.Header{
+		pm := &pb.OutputMessage{
+			Header: &pb.Header{
 				Uid:       uid,
 				GameId:    d.GameId(),
 				Version:   d.Version(),
@@ -147,8 +147,8 @@ func (d *defaultContext) OkResp(ds ...proto.Message) {
 		xlog.Error().Msg("session is nil")
 		return
 	}
-	pm := &envelope.OutputMessage{
-		Header: &envelope.Header{
+	pm := &pb.OutputMessage{
+		Header: &pb.Header{
 			GameId:    d.GameId(),
 			MsgId:     d.MsgId(),
 			Seq:       d.Seq(),

@@ -2,10 +2,10 @@ package game
 
 import (
 	"ming/internal/config"
+	"ming/internal/pb"
 	"ming/sdk/xlog"
 	"strconv"
 
-	"github.com/ivy-mobile/odin/envelope"
 	"github.com/olahol/melody"
 	"google.golang.org/protobuf/proto"
 )
@@ -102,7 +102,7 @@ func (g *Game) handleDisconnect() {
 func (g *Game) handleMessage() {
 	// 处理二进制消息
 	g.wsServer.HandleMessageBinary(func(s *melody.Session, msg []byte) {
-		var data envelope.InputMessage
+		var data pb.InputMessage
 		if err := proto.Unmarshal(msg, &data); err != nil {
 			xlog.Error().Msgf("[handleRequestProtoMessage] proto.Unmarshal error: %v", err)
 			return

@@ -2,19 +2,19 @@ package game
 
 import (
 	"fmt"
+	"ming/internal/pb"
 
-	"github.com/ivy-mobile/odin/envelope"
 	"github.com/olahol/melody"
 	"google.golang.org/protobuf/proto"
 )
 
 type (
 	// GameMessageHandler 由上层注册；具体业务在 handler 包实现，此处仅为分发回调类型。
-	GameMessageHandler func(g *Game, s *melody.Session, msg *envelope.InputMessage) error
+	GameMessageHandler func(g *Game, s *melody.Session, msg *pb.InputMessage) error
 )
 
 func Handler[I any](fn func(Context, *I)) GameMessageHandler {
-	return func(g *Game, s *melody.Session, msg *envelope.InputMessage) error {
+	return func(g *Game, s *melody.Session, msg *pb.InputMessage) error {
 		// 解析业务数据 payload 到传入的类型I
 		var in I
 		if len(msg.GetPayload()) > 0 {
