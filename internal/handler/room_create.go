@@ -8,11 +8,8 @@ import (
 	"ming/sdk/xlog"
 )
 
-// RoomCreate 创建房间：在 room 层注册房间 Actor，并返回房间信息。
+// RoomCreate 创建房间：room 内向 service 要号再登记运行时；handler 只组包回应。
 func RoomCreate(ctx game.Context, req *pb.CreateRoomRequest) {
-	if !EnsureAppGame(ctx) {
-		return
-	}
 	xlog.Info().Int("Player", int(ctx.Uid())).Str("Route", ctx.Route()).Msgf("[Request] RoomCreate %v", req)
 
 	if req.GetMaxPlayers() <= 0 {
@@ -20,7 +17,7 @@ func RoomCreate(ctx game.Context, req *pb.CreateRoomRequest) {
 		return
 	}
 
-	roomID, err := room.HostedNewRoom()
+	roomID, err := room.CreateRoom()
 	if err != nil {
 		ctx.ErrResp(consts.ErrorCode_RequestErr, err.Error())
 		return

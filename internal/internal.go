@@ -14,7 +14,6 @@ func Init() {
 	if err := room.InitDefault(); err != nil {
 		log.Fatalf("init room pipeline: %v", err)
 	}
-	G.RegisterShutdownHook(room.CloseDefault)
 
 	// 路由须在 G.Init() 阻塞前注册，否则 WebSocket 入站消息无法命中处理器
 	G.RegisterRoute("v1", consts.WsTag_LoginGame, game.Handler(handler.LoginGame))

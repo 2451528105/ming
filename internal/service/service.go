@@ -1,19 +1,3 @@
+// Package service 承接业务侧能力；具体实现按模块分文件，避免单文件堆叠。
+
 package service
-
-import "ming/sdk/xlog"
-
-// RoomService is the business layer called by room actor.
-// Keep it stateless where possible.
-type RoomService interface {
-	Handle(uid int64, route string, payload []byte, msgID string)
-}
-
-type DefaultRoomService struct{}
-
-func NewDefaultRoomService() *DefaultRoomService {
-	return &DefaultRoomService{}
-}
-
-func (s *DefaultRoomService) Handle(uid int64, route string, payload []byte, msgID string) {
-	xlog.Info().Msgf("[service] handle room event, uid: %d, route: %s, msgId: %s, payloadLen: %d", uid, route, msgID, len(payload))
-}

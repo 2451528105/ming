@@ -10,10 +10,6 @@ import (
 
 // 处理登录本游戏请求。
 func LoginGame(ctx game.Context, req *pb.LoginGameRequest) {
-	if !EnsureAppGame(ctx) {
-		return
-	}
-
 	xlog.Info().Int("Player", int(ctx.Uid())).Str("Route", ctx.Route()).Timestamp().Msgf("[Request] LoginGame ... %v", req.String())
 
 	ctx.OkResp(&pb.LoginGameResponse{
