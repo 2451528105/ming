@@ -28,11 +28,11 @@ type Context interface {
 type defaultContext struct {
 	g          *Game
 	session    *melody.Session        // 当前会话
-	req        *pb.InputMessage       // 本次请求数据
+	req        *pb.RequestMessage     // 本次请求数据
 	createTime int64                  // 进入请求时间 ms
 }
 
-func newDefaultContext(g *Game, s *melody.Session, req *pb.InputMessage) *defaultContext {
+func newDefaultContext(g *Game, s *melody.Session, req *pb.RequestMessage) *defaultContext {
 	return &defaultContext{
 		g:          g,
 		session:    s,
@@ -84,7 +84,7 @@ func (d *defaultContext) ErrResp(code consts.ErrorCode, msg ...string) {
 		xlog.Error().Msg("session is nil")
 		return
 	}
-	pm := &pb.OutputMessage{
+	pm := &pb.ServerMessage{
 		Header: &pb.Header{
 			Seq:       d.Seq(),
 			Uid:       d.Uid(),
@@ -120,7 +120,7 @@ func (d *defaultContext) Push(msgTag string, msg proto.Message, uids ...int64) {
 	}
 	data, _ := proto.Marshal(msg)
 	for _, uid := range uids {
-		pm := &pb.OutputMessage{
+		pm := &pb.ServerMessage{
 			Header: &pb.Header{
 				Uid:       uid,
 				GameId:    d.GameId(),
@@ -147,7 +147,7 @@ func (d *defaultContext) OkResp(ds ...proto.Message) {
 		xlog.Error().Msg("session is nil")
 		return
 	}
-	pm := &pb.OutputMessage{
+	pm := &pb.ServerMessage{
 		Header: &pb.Header{
 			GameId:    d.GameId(),
 			MsgId:     d.MsgId(),

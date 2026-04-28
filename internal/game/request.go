@@ -13,7 +13,7 @@ import (
 // 请求事件
 type requestEvent struct {
 	s    *melody.Session
-	data *pb.InputMessage
+	data *pb.RequestMessage
 }
 
 // UserRequestManager 用户请求管理器

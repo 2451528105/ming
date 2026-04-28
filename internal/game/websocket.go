@@ -102,7 +102,7 @@ func (g *Game) handleDisconnect() {
 func (g *Game) handleMessage() {
 	// 处理二进制消息
 	g.wsServer.HandleMessageBinary(func(s *melody.Session, msg []byte) {
-		var data pb.InputMessage
+		var data pb.RequestMessage
 		if err := proto.Unmarshal(msg, &data); err != nil {
 			xlog.Error().Msgf("[handleRequestProtoMessage] proto.Unmarshal error: %v", err)
 			return

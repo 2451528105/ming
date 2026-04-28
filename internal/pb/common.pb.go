@@ -105,7 +105,7 @@ func (x *Header) GetVersion() string {
 	return ""
 }
 
-type InputMessage struct {
+type RequestMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Header        *Header                `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 	Route         string                 `protobuf:"bytes,2,opt,name=route,proto3" json:"route,omitempty"`
@@ -114,20 +114,20 @@ type InputMessage struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *InputMessage) Reset() {
-	*x = InputMessage{}
+func (x *RequestMessage) Reset() {
+	*x = RequestMessage{}
 	mi := &file_common_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *InputMessage) String() string {
+func (x *RequestMessage) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*InputMessage) ProtoMessage() {}
+func (*RequestMessage) ProtoMessage() {}
 
-func (x *InputMessage) ProtoReflect() protoreflect.Message {
+func (x *RequestMessage) ProtoReflect() protoreflect.Message {
 	mi := &file_common_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -139,33 +139,33 @@ func (x *InputMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use InputMessage.ProtoReflect.Descriptor instead.
-func (*InputMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use RequestMessage.ProtoReflect.Descriptor instead.
+func (*RequestMessage) Descriptor() ([]byte, []int) {
 	return file_common_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *InputMessage) GetHeader() *Header {
+func (x *RequestMessage) GetHeader() *Header {
 	if x != nil {
 		return x.Header
 	}
 	return nil
 }
 
-func (x *InputMessage) GetRoute() string {
+func (x *RequestMessage) GetRoute() string {
 	if x != nil {
 		return x.Route
 	}
 	return ""
 }
 
-func (x *InputMessage) GetPayload() []byte {
+func (x *RequestMessage) GetPayload() []byte {
 	if x != nil {
 		return x.Payload
 	}
 	return nil
 }
 
-type OutputMessage struct {
+type ServerMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Header        *Header                `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 	MsgType       uint32                 `protobuf:"varint,2,opt,name=msg_type,json=msgType,proto3" json:"msg_type,omitempty"` // 1=push, 2=reply
@@ -177,20 +177,20 @@ type OutputMessage struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *OutputMessage) Reset() {
-	*x = OutputMessage{}
+func (x *ServerMessage) Reset() {
+	*x = ServerMessage{}
 	mi := &file_common_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *OutputMessage) String() string {
+func (x *ServerMessage) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OutputMessage) ProtoMessage() {}
+func (*ServerMessage) ProtoMessage() {}
 
-func (x *OutputMessage) ProtoReflect() protoreflect.Message {
+func (x *ServerMessage) ProtoReflect() protoreflect.Message {
 	mi := &file_common_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -202,47 +202,47 @@ func (x *OutputMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OutputMessage.ProtoReflect.Descriptor instead.
-func (*OutputMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use ServerMessage.ProtoReflect.Descriptor instead.
+func (*ServerMessage) Descriptor() ([]byte, []int) {
 	return file_common_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *OutputMessage) GetHeader() *Header {
+func (x *ServerMessage) GetHeader() *Header {
 	if x != nil {
 		return x.Header
 	}
 	return nil
 }
 
-func (x *OutputMessage) GetMsgType() uint32 {
+func (x *ServerMessage) GetMsgType() uint32 {
 	if x != nil {
 		return x.MsgType
 	}
 	return 0
 }
 
-func (x *OutputMessage) GetErrorCode() string {
+func (x *ServerMessage) GetErrorCode() string {
 	if x != nil {
 		return x.ErrorCode
 	}
 	return ""
 }
 
-func (x *OutputMessage) GetErrorMsg() string {
+func (x *ServerMessage) GetErrorMsg() string {
 	if x != nil {
 		return x.ErrorMsg
 	}
 	return ""
 }
 
-func (x *OutputMessage) GetMsgTag() string {
+func (x *ServerMessage) GetMsgTag() string {
 	if x != nil {
 		return x.MsgTag
 	}
 	return ""
 }
 
-func (x *OutputMessage) GetData() []byte {
+func (x *ServerMessage) GetData() []byte {
 	if x != nil {
 		return x.Data
 	}
@@ -260,13 +260,13 @@ const file_common_proto_rawDesc = "" +
 	"\agame_id\x18\x03 \x01(\x05R\x06gameId\x12\x15\n" +
 	"\x06msg_id\x18\x04 \x01(\tR\x05msgId\x12\x1c\n" +
 	"\ttimestamp\x18\x05 \x01(\x03R\ttimestamp\x12\x18\n" +
-	"\aversion\x18\x06 \x01(\tR\aversion\"b\n" +
-	"\fInputMessage\x12\"\n" +
+	"\aversion\x18\x06 \x01(\tR\aversion\"d\n" +
+	"\x0eRequestMessage\x12\"\n" +
 	"\x06header\x18\x01 \x01(\v2\n" +
 	".pb.HeaderR\x06header\x12\x14\n" +
 	"\x05route\x18\x02 \x01(\tR\x05route\x12\x18\n" +
 	"\apayload\x18\x03 \x01(\fR\apayload\"\xb7\x01\n" +
-	"\rOutputMessage\x12\"\n" +
+	"\rServerMessage\x12\"\n" +
 	"\x06header\x18\x01 \x01(\v2\n" +
 	".pb.HeaderR\x06header\x12\x19\n" +
 	"\bmsg_type\x18\x02 \x01(\rR\amsgType\x12\x1d\n" +
@@ -290,13 +290,13 @@ func file_common_proto_rawDescGZIP() []byte {
 
 var file_common_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_common_proto_goTypes = []any{
-	(*Header)(nil),        // 0: pb.Header
-	(*InputMessage)(nil),  // 1: pb.InputMessage
-	(*OutputMessage)(nil), // 2: pb.OutputMessage
+	(*Header)(nil),         // 0: pb.Header
+	(*RequestMessage)(nil), // 1: pb.RequestMessage
+	(*ServerMessage)(nil),  // 2: pb.ServerMessage
 }
 var file_common_proto_depIdxs = []int32{
-	0, // 0: pb.InputMessage.header:type_name -> pb.Header
-	0, // 1: pb.OutputMessage.header:type_name -> pb.Header
+	0, // 0: pb.RequestMessage.header:type_name -> pb.Header
+	0, // 1: pb.ServerMessage.header:type_name -> pb.Header
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

@@ -11,13 +11,13 @@ message Header {
     string version = 6;
 }
   
-message InputMessage {
+message RequestMessage {
     Header header = 1;
     string route = 2;
     bytes payload = 3;   // 这里再塞 request.proto 里的业务请求体
 }
   
-message OutputMessage {
+message ServerMessage {
     Header header = 1;
     uint32 msg_type = 2;   // 1=push, 2=reply
     string error_code = 3;
