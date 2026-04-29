@@ -16,10 +16,10 @@ func Init() {
 	}
 
 	// 路由须在 G.Init() 阻塞前注册，否则 WebSocket 入站消息无法命中处理器
-	G.RegisterRoute("v1", consts.WsTag_LoginGame, game.Handler(handler.LoginGame))
-	G.RegisterRoute("v1", consts.WsTag_RoomCreate, game.Handler(handler.RoomCreate))
-	G.RegisterRoute("v1", consts.WsTag_RoomJoin, game.Handler(handler.RoomJoin))
-	G.RegisterRoute("v1", consts.WsTag_RoomExit, game.Handler(handler.RoomExit))
-	G.RegisterRoute("v1", consts.WsTag_RoomReady, game.Handler(handler.RoomReady))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_LoginGame, game.Handler(handler.LoginGame))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomCreate, game.Handler(handler.RoomCreate))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomJoin, game.Handler(handler.RoomJoin))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomExit, game.Handler(handler.RoomExit))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomReady, game.Handler(handler.RoomReady))
 	G.Init()
 }

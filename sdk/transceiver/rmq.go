@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"ming/sdk/xlog"
 	"runtime/debug"
 	"sync"
 	"time"
 
-	rmq "github.com/apache/rocketmq-clients/golang"
+	rmq "github.com/apache/rocketmq-clients/golang/v5"
 	"github.com/google/uuid"
 )
 
@@ -68,6 +69,7 @@ func (t *XRMQTransceiver) SendMessage(uid int64, payload []byte, gameName, node 
 		Tag:   &tag,
 		Body:  body,
 	}
+	xlog.Info().Msgf("[SendMessage] 发送rmq消息send message: %v", msg)
 	receipt, err := t.producer.Send(context.Background(), msg)
 	if err != nil {
 		return "", fmt.Errorf("send message: %w", err)

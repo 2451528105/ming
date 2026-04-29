@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	rmq "github.com/apache/rocketmq-clients/golang"
+	rmq "github.com/apache/rocketmq-clients/golang/v5"
 	"github.com/ivy-mobile/odin/xutil/xos"
 	"github.com/olahol/melody"
 	"github.com/redis/go-redis/v9"
@@ -45,7 +45,7 @@ type Game struct {
 
 	urm           *UserRequestManager // 用户请求管理器
 	routes        sync.Map            // 路由存储器：key: 版本_tag, value: 处理逻辑
-	shutdownHooks []func() // 进程退出时逆序调用，由组装层注册
+	shutdownHooks []func()            // 进程退出时逆序调用，由组装层注册
 }
 
 // RegisterShutdownHook 注册进程关闭回调（逆序执行）；须在 Init 前调用。Game 不解析回调语义。

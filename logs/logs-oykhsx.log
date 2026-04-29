@@ -1,8 +1,0 @@
-env="dev" ip="10.80.40.181" level="info" msg="http server started on :8088" node="oykhsx" service="MING" time="2026-04-28 15:58:13"
-env="dev" ip="10.80.40.181" level="info" msg="http server started on :8088 successfully" node="oykhsx" service="MING" time="2026-04-28 15:58:13"
-env="dev" ip="10.80.40.181" level="info" msg="[Connect]user 10001 connected, connId: 307425309722365952, ip: 127.0.0.1:64651" node="oykhsx" service="MING" time="2026-04-28 15:58:25"
-env="dev" ip="10.80.40.181" level="info" msg="[Disconnect]user 10001 disconnected, connId: 307425309722365952" node="oykhsx" service="MING" time="2026-04-28 15:59:05"
-env="dev" ip="10.80.40.181" level="info" msg="[Connect]user 10001 connected, connId: 307425525821296640, ip: 127.0.0.1:59614" node="oykhsx" service="MING" time="2026-04-28 15:59:17"
-env="dev" ip="10.80.40.181" level="info" msg="[Disconnect]user 10001 disconnected, connId: 307425525821296640" node="oykhsx" service="MING" time="2026-04-28 15:59:25"
-env="dev" ip="10.80.40.181" level="info" msg="Received signal: terminated, shutting down server..." node="oykhsx" service="MING" time="2026-04-28 16:17:25"
-env="dev" ip="10.80.40.181" level="info" msg="UserRequestManager stopped" node="oykhsx" service="MING" time="2026-04-28 16:17:25"

@@ -5,14 +5,19 @@ import (
 	"ming/sdk/xlog"
 	"time"
 
-	rmq "github.com/apache/rocketmq-clients/golang"
-	"github.com/apache/rocketmq-clients/golang/credentials"
+	rmq "github.com/apache/rocketmq-clients/golang/v5"
+	"github.com/apache/rocketmq-clients/golang/v5/credentials"
 )
 
 func InitRmq(endpoint, namespace, group string) (rmq.Producer, rmq.SimpleConsumer, error) {
 	producer, err := NewRMQProducer(endpoint, namespace, group)
 	if err != nil {
 		xlog.Error().Err(err).Msg("初始化RMQ生产者失败")
+		return nil, nil, err
+	}
+	if err = producer.Start(); err != nil {
+		xlog.Error().Err(err).Msg("启动RMQ生产者失败")
+		_ = producer.GracefulStop()
 		return nil, nil, err
 	}
 	consumer, err := NewRMQConsumer(endpoint, namespace, group)
