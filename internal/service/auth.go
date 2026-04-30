@@ -33,3 +33,7 @@ func Register(name, password string, sex int) (int64, error) {
 	}
 	return user.ID, nil
 }
+
+func GetUserIdByToken(token string) (int64, error) {
+	return manager.GetUserIdByToken(token)
+}

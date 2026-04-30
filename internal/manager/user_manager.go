@@ -45,3 +45,12 @@ func SaveUserToken(id int64, token string) error {
 	}
 	return redis.Set(context.Background(), fmt.Sprintf(consts.KeyFormat_AuthToken, token), id, time.Minute*30).Err()
 }
+
+// 根据token获取用户id
+func GetUserIdByToken(token string) (int64, error) {
+	redis := m.redis
+	if redis == nil {
+		return 0, errors.New("redis is not initialized")
+	}
+	return redis.Get(context.Background(), fmt.Sprintf(consts.KeyFormat_AuthToken, token)).Int64()
+}
