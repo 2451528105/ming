@@ -24,6 +24,7 @@ const (
 // 登录游戏请求
 type LoginGameRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -56,6 +57,13 @@ func (x *LoginGameRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use LoginGameRequest.ProtoReflect.Descriptor instead.
 func (*LoginGameRequest) Descriptor() ([]byte, []int) {
 	return file_request_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *LoginGameRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
 }
 
 // 创建房间
@@ -274,8 +282,9 @@ var File_request_proto protoreflect.FileDescriptor
 
 const file_request_proto_rawDesc = "" +
 	"\n" +
-	"\rrequest.proto\x12\x02pb\"\x12\n" +
-	"\x10LoginGameRequest\"d\n" +
+	"\rrequest.proto\x12\x02pb\"(\n" +
+	"\x10LoginGameRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"d\n" +
 	"\x11CreateRoomRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1f\n" +
 	"\vmax_players\x18\x02 \x01(\x05R\n" +

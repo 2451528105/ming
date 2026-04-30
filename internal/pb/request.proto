@@ -4,7 +4,7 @@ option go_package = "./pb";
 
 // 登录游戏请求
 message LoginGameRequest {
-
+    string token = 1;
 }
 
 // ---------- 房间请求（响应见 push.proto）----------
