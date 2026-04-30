@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"ming/internal/config"
+	"ming/internal/handler/hp"
 	"ming/sdk/xlog"
 	"net"
 	"net/http"
@@ -25,6 +26,12 @@ func (g *Game) configureHttpServer() {
 			//hello测试
 			if r.URL.Path == "/hello" {
 				w.Write([]byte("hello"))
+				return
+			} else if r.URL.Path == "/login" {
+				hp.LoginHandler(w, r)
+				return
+			} else if r.URL.Path == "/register" {
+				hp.RegisterHandler(w, r)
 				return
 			}
 		}),

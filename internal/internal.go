@@ -3,7 +3,7 @@ package internal
 import (
 	"log"
 	"ming/internal/game"
-	"ming/internal/handler"
+	"ming/internal/handler/ws"
 	"ming/internal/room"
 	"ming/sdk/consts"
 )
@@ -16,10 +16,10 @@ func Init() {
 	}
 
 	// 路由须在 G.Init() 阻塞前注册，否则 WebSocket 入站消息无法命中处理器
-	G.RegisterRoute(consts.Version_V1, consts.WsTag_LoginGame, game.Handler(handler.LoginGame))
-	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomCreate, game.Handler(handler.RoomCreate))
-	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomJoin, game.Handler(handler.RoomJoin))
-	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomExit, game.Handler(handler.RoomExit))
-	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomReady, game.Handler(handler.RoomReady))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_LoginGame, game.Handler(ws.LoginGame))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomCreate, game.Handler(ws.RoomCreate))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomJoin, game.Handler(ws.RoomJoin))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomExit, game.Handler(ws.RoomExit))
+	G.RegisterRoute(consts.Version_V1, consts.WsTag_RoomReady, game.Handler(ws.RoomReady))
 	G.Init()
 }

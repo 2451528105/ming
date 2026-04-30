@@ -20,7 +20,7 @@ PostgresSql:
   Port: 5432
   User: postgres
   Password: postgres
-  DB: postgres
+  DB: ming
 RocketMQ:
   Endpoint: 127.0.0.1:8081
   Namespace: ""

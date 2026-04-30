@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"ming/internal/config"
+	"ming/internal/manager"
 	"ming/sdk/consts"
 	"ming/sdk/engine"
 	"ming/sdk/locate"
@@ -122,7 +123,7 @@ func (g *Game) Init() {
 	xos.WaitSysSignal(func(s os.Signal) {
 		xlog.Info().Msgf("Received signal: %s, shutting down server...", s.String())
 	})
-
+	manager.Init(g.postgres, g.redis)
 	// 5. 释放资源
 	g.shutdown()
 }
