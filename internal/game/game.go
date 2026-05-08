@@ -117,13 +117,13 @@ func (g *Game) Init() {
 	g.transceiver = transceiver.NewXRMQTransceiver(consts.TopicGameMessage, g.producer, g.consumer)
 	g.locator = locate.NewLocator(g.redis, consts.KeyFormat_Player, consts.Field_GateNode, consts.Field_GateConnId)
 	g.urm = NewUserRequestManager(g.processUserRequest)
+	manager.Init(g.postgres, g.redis)
 	//启动各个组件
 	g.startConnectionServices()
 	// 4.等待系统信号
 	xos.WaitSysSignal(func(s os.Signal) {
 		xlog.Info().Msgf("Received signal: %s, shutting down server...", s.String())
 	})
-	manager.Init(g.postgres, g.redis)
 	// 5. 释放资源
 	g.shutdown()
 }
